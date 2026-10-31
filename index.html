@@ -1,1 +1,1743 @@
-<script>document["write"]("<!DOCTYPE html><html lang=\"zh-TW\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1~0\"><title>3D 體素風景沙盒 — 雲霧櫻島與五重塔 (Voxel Landscape Sandbox)<^title><script src=\"ht_tps:^^cdn~tailwindcss~com^3~4~17\"><^script><style>*{box-sizing:border-box;user-select:none}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:sans-serif;background:#0f172a;color:#f1f5f9}#canvas-container,#sky-backdrop{position:absolute;inset:0;width:100%;height:100%}#canvas-container{z-index:1}#sky-backdrop{z-index:0;transition:background ~6s}~glass-panel{background:rgba(15,23,42,~72);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,~14);box-shadow:0 20px 40px -15px rgba(0,0,0,~6);border-radius:16px}~ctrl-btn{transition:all ~2s;border:1px solid rgba(255,255,255,~1);background:rgba(30,41,59,~65);color:#f1f5f9;cursor:pointer;border-radius:12px}~ctrl-btn~active{background:linear-gradient(135deg,rgba(244,114,182,~85),rgba(168,85,247,~85));border-color:rgba(255,255,255,~45);color:#fff}~weather-btn~active{background:linear-gradient(135deg,rgba(56,189,248,~85),rgba(59,130,246,~85));border-color:rgba(255,255,255,~45);color:#fff}~palette-swatch{cursor:pointer}~palette-swatch~active{transform:scale(1~15);box-shadow:0 0 0 2px #fff}<^style><^head><body class=\"text-slate-100\"><div id=\"sky-backdrop\"><^div><div id=\"canvas-container\"><^div><div class=\"fixed top-4 left-4 z-10 flex flex-col gap-2 max-w-md\" style=\"position:fixed;top:16px;left:16px;z-index:10\"><div class=\"glass-panel rounded-2xl px-4 py-3\" style=\"padding:12px 16px\"><div class=\"flex items-center gap-2~5\"><span class=\"inline-flex items-center justify-center w-8 h-8 rounded-xl bg-pink-500 text-white font-bold text-sm\">⛩️<^span><div><h1 class=\"text-base font-bold text-white flex items-center gap-2\">雲霧櫻島・體素沙盒 <span id=\"fps-badge\" class=\"text-xs font-mono px-2 py-0~5 rounded-full bg-emerald-500^20 text-emerald-300\">60 FPS<^span><^h1><p class=\"text-xs text-slate-300\">InstancedMesh 高密度體素 · 即時日夜光影與水體物理<^p><^div><^div><div class=\"mt-2 pt-2 border-t border-white^10 flex gap-3 text-xs text-slate-300\"><span>體素總數：<strong id=\"voxel-count\" class=\"text-pink-300 font-mono\">3,420<^strong><^span><span>水面波浪：<strong id=\"water-count\" class=\"text-sky-300 font-mono\">1,124<^strong><^span><span>狀態：<strong id=\"status-label\" class=\"text-amber-300\">清晨 ^ 晴朗無雲<^strong><^span><^div><^div><div class=\"glass-panel rounded-2xl px-3~5 py-2~5\" style=\"padding:10px 14px;margin-top:8px\"><div class=\"flex items-center justify-between mb-1~5\"><span class=\"text-xs font-semibold\">🧱 沙盒建造模式（點擊放置 ^ Shift+點擊移除）<^span><button id=\"btn-clear-custom\" class=\"text-xs px-2 py-0~5 rounded bg-slate-700 hover:bg-rose-500\">清除自建<^button><^div><div class=\"flex gap-1~5\" id=\"voxel-palette\"><button data-type=\"sakura\" class=\"palette-swatch active w-6 h-6 rounded-lg\" style=\"background:#f9a8d4;width:24px;height:24px\" title=\"櫻花粉葉\"><^button><button data-type=\"grass\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#4ade80;width:24px;height:24px\" title=\"翠綠草地\"><^button><button data-type=\"stone\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#64748b;width:24px;height:24px\" title=\"灰岩峭壁\"><^button><button data-type=\"wood\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#92400e;width:24px;height:24px\" title=\"檜木建材\"><^button><button data-type=\"crimson\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#dc2626;width:24px;height:24px\" title=\"朱紅塔柱\"><^button><button data-type=\"roof\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#1e293b;width:24px;height:24px\" title=\"深黛屋瓦\"><^button><button data-type=\"gold\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#facc15;width:24px;height:24px\" title=\"黃金相輪\"><^button><button data-type=\"lantern\" class=\"palette-swatch w-6 h-6 rounded-lg\" style=\"background:#fef08a;width:24px;height:24px\" title=\"發光燈籠\"><^button><^div><^div><^div><aside class=\"fixed top-4 right-4 z-10 w-80 glass-panel rounded-2xl p-4\" style=\"position:fixed;top:16px;right:16px;z-index:10;width:320px;padding:16px\"><div class=\"flex items-center justify-between pb-2~5 mb-3 border-b border-white^10\"><h2 class=\"text-sm font-bold\">🎛️ 環境與天氣控制台<^h2><button id=\"btn-toggle-panel\" class=\"text-xs px-2 py-0~5 rounded-lg bg-slate-800\">收合<^button><^div><div id=\"panel-body\" class=\"space-y-4\"><div><div class=\"flex justify-between mb-1~5\"><label for=\"time-slider\" class=\"text-xs font-semibold\">🕒 時間切換（日夜循環）<^label><span id=\"time-display\" class=\"text-xs font-mono font-bold text-pink-300\">06:30 清晨<^span><^div><div class=\"grid grid-cols-4 gap-1~5 mb-2~5\"><button data-time=\"dawn\" class=\"time-btn ctrl-btn active rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>🌅<^span><span>清晨<^span><^button><button data-time=\"noon\" class=\"time-btn ctrl-btn rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>☀️<^span><span>正午<^span><^button><button data-time=\"dusk\" class=\"time-btn ctrl-btn rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>🌇<^span><span>黃昏<^span><^button><button data-time=\"night\" class=\"time-btn ctrl-btn rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>🌙<^span><span>夜晚<^span><^button><^div><input id=\"time-slider\" type=\"range\" min=\"0\" max=\"24\" step=\"0~05\" value=\"6~5\" class=\"w-full\" ^><^div><div><div class=\"flex justify-between mb-1~5\"><span class=\"text-xs font-semibold\">🌦️ 天氣切換（體素粒子特效）<^span><span id=\"weather-display\" class=\"text-xs text-sky-300\">晴朗無雲<^span><^div><div class=\"grid grid-cols-4 gap-1~5\"><button data-weather=\"sunny\" class=\"weather-btn ctrl-btn active rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>🌤️<^span><span>晴天<^span><^button><button data-weather=\"rain\" class=\"weather-btn ctrl-btn rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>🌧️<^span><span>下雨<^span><^button><button data-weather=\"snow\" class=\"weather-btn ctrl-btn rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>❄️<^span><span>下雪<^span><^button><button data-weather=\"fog\" class=\"weather-btn ctrl-btn rounded-xl py-1~5 text-xs flex flex-col items-center\"><span>🌫️<^span><span>起霧<^span><^button><^div><^div><div class=\"pt-2 border-t border-white^10 space-y-2\"><div class=\"flex justify-between items-center\"><span class=\"text-xs\">🎥 鏡頭自動環繞<^span><button id=\"btn-autorotate\" class=\"text-xs px-3 py-1 rounded-lg bg-emerald-500^30 text-emerald-200\">開啟中<^button><^div><div class=\"flex justify-between items-center\"><span class=\"text-xs\">⏱️ 時間自動流逝<^span><button id=\"btn-autocycle\" class=\"text-xs px-3 py-1 rounded-lg bg-slate-700^60 text-slate-300\">已暫停<^button><^div><button id=\"btn-reset-cam\" class=\"w-full py-1~5 rounded-xl ctrl-btn text-xs\">🧭 重置最佳觀景視角<^button><^div><^div><^aside><script> const G=id=>document~getElementById(id); let cTH=6~5,cW='sunny',uAR=true,aCT=false,pCl=false,bCol=0xf9a8d4,baseN=3420,customN=0; let scene,camera,controls,sun,tIM,wIM,wMesh,wMat,DCP,DCT; const TPRE={dawn:[6~5,'06:30 清晨','清晨','#3b4278','#f472b6','#fed7aa',1~0],noon:[12~5,'12:30 正午','正午','#0284c7','#38bdf8','#e0f2fe',1~35],dusk:[17~8,'17:48 黃昏','黃昏','#311042','#ea580c','#fde047',0~95],night:[22,'22:00 夜晚','夜晚','#070b19','#1e1b4b','#312e81',0~25]}; const WLBL={sunny:'晴朗無雲',rain:'微雨綿綿',snow:'瑞雪紛飛',fog:'濃霧瀰漫'},BCOL={sakura:0xf9a8d4,grass:0x4ade80,stone:0x64748b,wood:0x92400e,crimson:0xdc2626,roof:0x1e293b,gold:0xfacc15,lantern:0xfef08a}; function uES(k){const p=TPRE[k]||(cTH<9?TPRE~dawn:cTH<16?TPRE~noon:cTH<19?TPRE~dusk:TPRE~night);const hrs=String(Math~floor(cTH)%24)~padStart(2,'0'),mins=String(Math~floor((cTH%1)*60))~padStart(2,'0');G('time-display')~textContent=k?p[1]:`${hrs}:${mins} ${p[2]}`;G('weather-display')~textContent=WLBL[cW];G('status-label')~textContent=`${p[2]} ^ ${WLBL[cW]}`;G('sky-backdrop')~style~background=`linear-gradient(180deg,${p[3]} 0%,${p[4]} 55%,${p[5]} 100%)`;if(sun)sun~intensity=p[6]*(cW==='rain'?0~65:1);if(scene&&scene~fog)scene~fog~density=cW==='fog'?0~016:cW==='rain'?0~008:0~004;} uES('dawn'); document~querySelectorAll('~time-btn')~forEach(b=>b~addEventListener('click',()=>{const k=b~getAttribute('data-time');cTH=TPRE[k][0];G('time-slider')~value=cTH;document~querySelectorAll('~time-btn')~forEach(x=>x~classList~remove('active'));b~classList~add('active');uES(k);})); G('time-slider')~addEventListener('input',e=>{cTH=parseFloat(e~target~value);document~querySelectorAll('~time-btn')~forEach(x=>x~classList~remove('active'));uES();}); document~querySelectorAll('~weather-btn')~forEach(b=>b~addEventListener('click',()=>{cW=b~getAttribute('data-weather');document~querySelectorAll('~weather-btn')~forEach(x=>x~classList~remove('active'));b~classList~add('active');if(wMesh){wMesh~visible=cW==='rain'||cW==='snow';wMat~color~setHex(cW==='rain'?0x93c5fd:0xffffff);}uES();})); G('btn-autorotate')~addEventListener('click',e=>{uAR=!uAR;if(controls)controls~autoRotate=uAR;e~currentTarget~textContent=uAR?'開啟中':'已暫停';}); G('btn-autocycle')~addEventListener('click',e=>{aCT=!aCT;e~currentTarget~textContent=aCT?'流逝中':'已暫停';}); G('btn-reset-cam')~addEventListener('click',()=>{if(camera&&controls){camera~position~copy(DCP);controls~target~copy(DCT);controls~update();}}); G('btn-toggle-panel')~addEventListener('click',e=>{pCl=!pCl;G('panel-body')~style~display=pCl?'none':'block';e~currentTarget~textContent=pCl?'展開':'收合';}); document~querySelectorAll('~palette-swatch')~forEach(s=>s~addEventListener('click',()=>{bCol=BCOL[s~getAttribute('data-type')];document~querySelectorAll('~palette-swatch')~forEach(x=>x~classList~remove('active'));s~classList~add('active');})); G('btn-clear-custom')~addEventListener('click',()=>{customN=0;if(tIM){tIM~count=baseN;tIM~instanceMatrix~needsUpdate=true;}G('voxel-count')~textContent=baseN~toLocaleString();}); function loadScript(u,cb){const s=document~createElement('script');s~src=u;s~onload=cb;document~head~appendChild(s);} loadScript('ht_tps:^^cdnjs~cloudflare~com^ajax^libs^three~js^r128^three~min~js',()=>loadScript('ht_tps:^^cdn~jsdelivr~net^npm^three@0~128~0^examples^js^controls^OrbitControls~js',()=>{ scene=new THREE~Scene();scene~fog=new THREE~FogExp2(0xfbd3e9,0~0045); camera=new THREE~PerspectiveCamera(45,innerWidth^innerHeight,0~5,400);DCP=new THREE~Vector3(42,30,46);DCT=new THREE~Vector3(0,7,0);camera~position~copy(DCP); const renderer=new THREE~WebGLRenderer({antialias:true,alpha:true});renderer~setSize(innerWidth,innerHeight);renderer~shadowMap~enabled=true;G('canvas-container')~appendChild(renderer~domElement); controls=new THREE~OrbitControls(camera,renderer~domElement);controls~target~copy(DCT);controls~enableDamping=true;controls~autoRotate=uAR; scene~add(new THREE~HemisphereLight(0xffebf5,0x3b4d5e,0~7)); sun=new THREE~DirectionalLight(0xfff3d6,1~2);sun~position~set(40,50,30);sun~castShadow=true;scene~add(sun); const vox=[],wat=[],box=new THREE~BoxGeometry(1,1,1),dum=new THREE~Object3D(),col=new THREE~Color(),add=(x,y,z,c)=>vox~push({x,y,z,c}); for(let x=-20;x<=20;x++)for(let z=-20;z<=20;z++){const r=Math~hypot(x,z);if(r<18){const h=Math~max(1,Math~round((1-r^18)*9+Math~sin(x*0~3)*Math~cos(z*0~3)*2));for(let y=0;y<=h;y++)add(x,y,z,y===h?(h<2?0xfde68a:0x4ade80):0x475569);}else if(r<26)wat~push({x,z,r});} for(let l=0;l<4;l++){const y0=9+l*4,w=4-l;for(let x=-w;x<=w;x++)for(let z=-w;z<=w;z++){add(4+x,y0,z,0xdc2626);add(4+x,y0+1,z,0xfef3c7);add(4+x,y0+2,z,0x1e293b);}for(let x=-w-1;x<=w+1;x++)for(let z=-w-1;z<=w+1;z++)add(4+x,y0+3,z,0x1e293b);} for(let y=25;y<30;y++)add(4,y,0,0xfacc15); [[-5,-4],[10,-5],[9,6],[-8,5],[0,10]]~forEach(([tx,tz])=>{for(let y=4;y<9;y++)add(tx,y,tz,0x5c3a21);for(let dx=-2;dx<=2;dx++)for(let dy=0;dy<=2;dy++)for(let dz=-2;dz<=2;dz++)if(Math~hypot(dx,dy,dz)<=2~3)add(tx+dx,9+dy,tz+dz,0xf9a8d4);}); baseN=vox~length;tIM=new THREE~InstancedMesh(box,new THREE~MeshStandardMaterial({roughness:0~75}),baseN+300); vox~forEach((v,i)=>{dum~position~set(v~x,v~y,v~z);dum~scale~set(1,1,1);dum~updateMatrix();tIM~setMatrixAt(i,dum~matrix);tIM~setColorAt(i,col~setHex(v~c));}); tIM~count=baseN;scene~add(tIM); wIM=new THREE~InstancedMesh(box,new THREE~MeshStandardMaterial({color:0x38bdf8,transparent:true,opacity:0~8,roughness:0~2}),wat~length);scene~add(wIM); wMat=new THREE~MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0~85});wMesh=new THREE~InstancedMesh(box,wMat,250);wMesh~visible=cW==='rain'||cW==='snow';scene~add(wMesh); const wPts=Array~from({length:250},()=>({x:(Math~random()-0~5)*50,y:Math~random()*30,z:(Math~random()-0~5)*50,s:0~8+Math~random()*0~5})); G('voxel-count')~textContent=baseN~toLocaleString();G('water-count')~textContent=wat~length~toLocaleString(); const ray=new THREE~Raycaster(),ms=new THREE~Vector2(); renderer~domElement~addEventListener('click',e=>{const r=renderer~domElement~getBoundingClientRect();ms~x=((e~clientX-r~left)^r~width)*2-1;ms~y=-((e~clientY-r~top)^r~height)*2+1;ray~setFromCamera(ms,camera);const h=ray~intersectObject(tIM);if(h~length&&tIM~count<baseN+300){const m=new THREE~Matrix4();tIM~getMatrixAt(h[0]~instanceId,m);const p=new THREE~Vector3()~setFromMatrixPosition(m)~add(h[0]~face~normal);dum~position~copy(p);dum~scale~set(1,1,1);dum~updateMatrix();tIM~setMatrixAt(tIM~count,dum~matrix);tIM~setColorAt(tIM~count,col~setHex(bCol));tIM~count++;tIM~instanceMatrix~needsUpdate=true;tIM~instanceColor~needsUpdate=true;G('voxel-count')~textContent=tIM~count~toLocaleString();}}); const clk=new THREE~Clock();function animate(){requestAnimationFrame(animate);const dt=clk~getDelta(),t=clk~getElapsedTime();if(aCT){cTH=(cTH+dt*0~5)%24;G('time-slider')~value=cTH~toFixed(2);uES();}wat~forEach((w,i)=>{dum~position~set(w~x,0~3+Math~sin(w~x*0~3+t*2)*0~15,w~z);dum~scale~set(1,0~8,1);dum~updateMatrix();wIM~setMatrixAt(i,dum~matrix);});wIM~instanceMatrix~needsUpdate=true;if(wMesh~visible){wPts~forEach((p,i)=>{p~y-=dt*(cW==='rain'?22:5)*p~s;if(p~y<0)p~y=30;dum~position~set(p~x,p~y,p~z);dum~scale~set(cW==='rain'?0~08:0~22,cW==='rain'?0~9:0~22,cW==='rain'?0~08:0~22);dum~updateMatrix();wMesh~setMatrixAt(i,dum~matrix);});wMesh~instanceMatrix~needsUpdate=true;}controls~update();renderer~render(scene,camera);}animate(); })); <^script><^body><^html>"["replace"](RegExp("~","g"),String["fromCharCode"](46))["replace"](RegExp("\\^","g"),String["fromCharCode"](47))["replace"](RegExp("ht_tps","g"),"ht"+"tps"))</script>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D 體素風景沙盒 — 雲霧櫻島與五重塔 (Voxel Landscape Sandbox)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background-color: #0f172a;
+    }
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    #sky-backdrop {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      transition: background 0.6s ease;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.08) inset;
+    }
+    .ctrl-btn {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.65);
+    }
+    .ctrl-btn:hover {
+      background: rgba(51, 65, 85, 0.85);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+    .ctrl-btn.active {
+      background: linear-gradient(135deg, rgba(244, 114, 182, 0.85), rgba(168, 85, 247, 0.85));
+      border-color: rgba(255, 255, 255, 0.45);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+    }
+    .weather-btn.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.85), rgba(59, 130, 246, 0.85));
+      border-color: rgba(255, 255, 255, 0.45);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+    }
+    /* Custom Range Slider */
+    input[type=range].time-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f472b6 0%, #38bdf8 33%, #fb923c 66%, #312e81 100%);
+      outline: none;
+    }
+    input[type=range].time-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #f472b6;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    input[type=range].time-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .palette-swatch {
+      transition: all 0.18s ease;
+    }
+    .palette-swatch.active {
+      transform: scale(1.15);
+      box-shadow: 0 0 0 2px #ffffff, 0 4px 10px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body class="text-slate-100">
+
+  <!-- Sky CSS Gradient Backdrop -->
+  <div id="sky-backdrop"></div>
+
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Top-Left Title & Live Stats Badge -->
+  <div class="fixed top-4 left-4 z-10 flex flex-col gap-2 pointer-events-none max-w-xs sm:max-w-md">
+    <div class="glass-panel rounded-2xl px-4 py-3 pointer-events-auto">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-pink-400 to-purple-600 text-white font-bold shadow-md text-sm">⛩️</span>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
+            雲霧櫻島・體素沙盒
+            <span id="fps-badge" class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">60 FPS</span>
+          </h1>
+          <p class="text-[11px] text-slate-300/90">InstancedMesh 高密度體素 · 即時日夜光影與水體物理</p>
+        </div>
+      </div>
+      <div class="mt-2 pt-2 border-t border-white/10 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-300">
+        <span>體素總數：<strong id="voxel-count" class="text-pink-300 font-mono">0</strong></span>
+        <span>•</span>
+        <span>水面波浪：<strong id="water-count" class="text-sky-300 font-mono">0</strong></span>
+        <span>•</span>
+        <span>狀態：<strong id="status-label" class="text-amber-300">清晨 / 晴朗</strong></span>
+      </div>
+    </div>
+
+    <!-- Interactive Voxel Builder / Hint Pill -->
+    <div class="glass-panel rounded-2xl px-3.5 py-2.5 pointer-events-auto hidden sm:block">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[11px] font-semibold text-slate-200 flex items-center gap-1.5">
+          <span>🧱</span> 沙盒建造模式（點擊場景放置 / Shift+點擊移除）
+        </span>
+        <button id="btn-clear-custom" class="text-[10px] px-2 py-0.5 rounded bg-slate-700/80 hover:bg-rose-500/80 text-slate-200 hover:text-white transition">清除自建</button>
+      </div>
+      <div class="flex items-center gap-1.5" id="voxel-palette">
+        <button data-type="sakura" class="palette-swatch active w-6 h-6 rounded-lg border border-white/30" style="background:#f9a8d4" title="櫻花粉葉"></button>
+        <button data-type="grass" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#4ade80" title="翠綠草地"></button>
+        <button data-type="stone" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#64748b" title="灰岩峭壁"></button>
+        <button data-type="wood" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#92400e" title="檜木建材"></button>
+        <button data-type="crimson" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#dc2626" title="朱紅塔柱"></button>
+        <button data-type="roof" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#1e293b" title="深黛屋瓦"></button>
+        <button data-type="gold" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#facc15" title="黃金相輪"></button>
+        <button data-type="lantern" class="palette-swatch w-6 h-6 rounded-lg border border-white/30" style="background:#fef08a" title="發光燈籠"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top-Right Control Panel (Core Requirement) -->
+  <aside class="fixed top-4 right-4 z-10 w-72 sm:w-80 glass-panel rounded-2xl p-4 text-slate-100 transition-all duration-300">
+    <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-white/10">
+      <div class="flex items-center gap-2">
+        <span class="text-base">🎛️</span>
+        <h2 class="text-xs sm:text-sm font-bold tracking-wide uppercase text-slate-100">環境與天氣控制台</h2>
+      </div>
+      <button id="btn-toggle-panel" class="text-xs px-2 py-0.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-white/10" title="收合/展開面板">
+        收合
+      </button>
+    </div>
+
+    <div id="panel-body" class="space-y-4">
+      <!-- Time of Day Section -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label for="time-slider" class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+            <span>🕒</span> 時間切換（日夜循環）
+          </label>
+          <span id="time-display" class="text-xs font-mono font-bold text-pink-300">06:30 清晨</span>
+        </div>
+
+        <!-- Preset Buttons -->
+        <div class="grid grid-cols-4 gap-1.5 mb-2.5">
+          <button data-time="dawn" class="time-btn ctrl-btn active rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>🌅</span>
+            <span>清晨</span>
+          </button>
+          <button data-time="noon" class="time-btn ctrl-btn rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>☀️</span>
+            <span>正午</span>
+          </button>
+          <button data-time="dusk" class="time-btn ctrl-btn rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>🌇</span>
+            <span>黃昏</span>
+          </button>
+          <button data-time="night" class="time-btn ctrl-btn rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>🌙</span>
+            <span>夜晚</span>
+          </button>
+        </div>
+
+        <!-- Continuous Slider -->
+        <div class="px-1">
+          <input id="time-slider" type="range" min="0" max="24" step="0.05" value="6.5" class="time-slider" />
+          <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
+            <span>00:00</span>
+            <span>06:00</span>
+            <span>12:00</span>
+            <span>18:00</span>
+            <span>24:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weather Section -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+            <span>🌦️</span> 天氣切換（體素粒子特效）
+          </span>
+          <span id="weather-display" class="text-[11px] text-sky-300 font-medium">晴朗無雲</span>
+        </div>
+        <div class="grid grid-cols-4 gap-1.5">
+          <button data-weather="sunny" class="weather-btn ctrl-btn active rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>🌤️</span>
+            <span>晴天</span>
+          </button>
+          <button data-weather="rain" class="weather-btn ctrl-btn rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>🌧️</span>
+            <span>下雨</span>
+          </button>
+          <button data-weather="snow" class="weather-btn ctrl-btn rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>❄️</span>
+            <span>下雪</span>
+          </button>
+          <button data-weather="fog" class="weather-btn ctrl-btn rounded-xl py-1.5 px-2 text-xs font-medium flex flex-col items-center gap-0.5">
+            <span>🌫️</span>
+            <span>起霧</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Camera & Scene Toggles -->
+      <div class="pt-2 border-t border-white/10 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-300">🎥 鏡頭自動環繞</span>
+          <button id="btn-autorotate" class="text-xs px-3 py-1 rounded-lg bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-medium transition">
+            開啟中
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-300">⏱️ 時間自動流逝</span>
+          <button id="btn-autocycle" class="text-xs px-3 py-1 rounded-lg bg-slate-700/60 text-slate-300 border border-white/10 font-medium transition">
+            已暫停
+          </button>
+        </div>
+        <div class="flex items-center gap-1.5 pt-1">
+          <button id="btn-reset-cam" class="w-full py-1.5 rounded-xl ctrl-btn text-xs font-medium text-slate-200 flex items-center justify-center gap-1.5">
+            <span>🧭</span> 重置最佳觀景視角
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Bottom Left Controls Legend -->
+  <div class="fixed bottom-4 left-4 z-10 pointer-events-none hidden md:block">
+    <div class="glass-panel rounded-xl px-3.5 py-2 text-[11px] text-slate-300 flex items-center gap-4">
+      <span>🖱️ <strong>左鍵拖曳</strong>：旋轉視角</span>
+      <span>🖱️ <strong>右鍵拖曳</strong>：平移畫面</span>
+      <span>⚙️ <strong>滾輪</strong>：縮放遠近</span>
+      <span>✨ <strong>點擊方塊</strong>：新增體素 / <strong>Shift+點擊</strong>：移除</span>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // 1. GLOBAL CONFIGURATION & SCENE INITIALIZATION
+    // ============================================================================
+    const container = document.getElementById('canvas-container');
+    const skyBackdrop = document.getElementById('sky-backdrop');
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0xfbd3e9, 0.0045);
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.5,
+      400
+    );
+    const DEFAULT_CAM_POS = new THREE.Vector3(48, 34, 52);
+    const DEFAULT_CAM_TARGET = new THREE.Vector3(0, 8, 0);
+    camera.position.copy(DEFAULT_CAM_POS);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.copy(DEFAULT_CAM_TARGET);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.03; // Prevent going below water level
+    controls.minDistance = 14;
+    controls.maxDistance = 135;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.65;
+
+    // Pause autoRotate briefly while user interacts, resume smoothly if enabled
+    let userAutoRotateEnabled = true;
+    let interactionTimeout = null;
+    controls.addEventListener('start', () => {
+      controls.autoRotate = false;
+      if (interactionTimeout) clearTimeout(interactionTimeout);
+    });
+    controls.addEventListener('end', () => {
+      if (userAutoRotateEnabled) {
+        interactionTimeout = setTimeout(() => {
+          if (userAutoRotateEnabled) controls.autoRotate = true;
+        }, 2500);
+      }
+    });
+
+    // ============================================================================
+    // 2. PROCEDURAL BUMP / VOXEL TEXTURE GENERATOR (NO EXTERNAL ASSETS)
+    // ============================================================================
+    function createVoxelCanvasTexture() {
+      const c = document.createElement('canvas');
+      c.width = 64;
+      c.height = 64;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 64, 64);
+
+      // Subtle bevel border for crisp voxel aesthetic
+      ctx.strokeStyle = '#d8d8d8';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(2, 2, 60, 60);
+
+      // Subtle inner grain noise
+      for (let y = 4; y < 60; y += 4) {
+        for (let x = 4; x < 60; x += 4) {
+          const v = 244 + Math.floor(Math.random() * 12);
+          ctx.fillStyle = `rgb(${v},${v},${v})`;
+          ctx.fillRect(x, y, 4, 4);
+        }
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      return tex;
+    }
+
+    const voxelTexture = createVoxelCanvasTexture();
+
+    // ============================================================================
+    // 3. LIGHTING & CELESTIAL SYSTEM (SUN, MOON, LANTERN LIGHTS)
+    // ============================================================================
+    const hemiLight = new THREE.HemisphereLight(0xffebf5, 0x3b4d5e, 0.65);
+    hemiLight.position.set(0, 60, 0);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff3d6, 1.25);
+    sunLight.position.set(45, 50, 30);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 5;
+    sunLight.shadow.camera.far = 160;
+    const d = 42;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.normalBias = 0.02;
+    scene.add(sunLight);
+
+    // Celestial visual group (Voxel Sun & Moon in the sky)
+    const celestialGroup = new THREE.Group();
+    scene.add(celestialGroup);
+
+    const sunMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(5.5, 5.5, 5.5),
+      new THREE.MeshBasicMaterial({ color: 0xffdd66 })
+    );
+    celestialGroup.add(sunMesh);
+
+    const moonMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(4.2, 4.2, 4.2),
+      new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })
+    );
+    celestialGroup.add(moonMesh);
+
+    // Warm point lights for pagoda & lanterns (active especially at dusk/night)
+    const lanternPointLights = [];
+    function addLanternLight(x, y, z, distance = 16) {
+      const pl = new THREE.PointLight(0xff9e3b, 0, distance, 1.8);
+      pl.position.set(x, y, z);
+      scene.add(pl);
+      lanternPointLights.push(pl);
+    }
+
+    // ============================================================================
+    // 4. DETERMINISTIC NOISE & VOXEL WORLD BUILDER
+    // ============================================================================
+    function hash2D(x, z) {
+      const h = Math.sin(x * 127.1 + z * 311.7) * 43758.5453123;
+      return h - Math.floor(h);
+    }
+
+    function valueNoise(x, z) {
+      const xi = Math.floor(x);
+      const zi = Math.floor(z);
+      const xf = x - xi;
+      const zf = z - zi;
+      const u = xf * xf * (3 - 2 * xf);
+      const v = zf * zf * (3 - 2 * zf);
+      const a = hash2D(xi, zi);
+      const b = hash2D(xi + 1, zi);
+      const c = hash2D(xi, zi + 1);
+      const d = hash2D(xi + 1, zi + 1);
+      return (a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v;
+    }
+
+    function fbm(x, z) {
+      let val = 0;
+      let amp = 0.5;
+      let freq = 1;
+      for (let i = 0; i < 3; i++) {
+        val += amp * valueNoise(x * freq, z * freq);
+        freq *= 2.02;
+        amp *= 0.5;
+      }
+      return val;
+    }
+
+    // Store voxels in a Map keyed by "x,y,z" to prevent duplicates & optimize interior
+    const solidVoxels = new Map();
+    const emissiveLanternVoxels = []; // { x, y, z, color }
+    const waterfallStreamVoxels = []; // { x, y, z, phase, isCascade }
+
+    function setVoxel(x, y, z, colorHex, category = 'solid') {
+      const rx = Math.round(x);
+      const ry = Math.round(y);
+      const rz = Math.round(z);
+      const key = `${rx},${ry},${rz}`;
+      if (category === 'lantern') {
+        solidVoxels.delete(key);
+        emissiveLanternVoxels.push({ x: rx, y: ry, z: rz, color: colorHex });
+      } else {
+        solidVoxels.set(key, { x: rx, y: ry, z: rz, color: colorHex });
+      }
+    }
+
+    function removeVoxel(x, y, z) {
+      const key = `${Math.round(x)},${Math.round(y)},${Math.round(z)}`;
+      solidVoxels.delete(key);
+    }
+
+    // Color Palette with natural per-voxel subtle variation
+    function varyColor(hex, range = 0.05) {
+      const c = new THREE.Color(hex);
+      const hsl = {};
+      c.getHSL(hsl);
+      hsl.l = THREE.MathUtils.clamp(hsl.l + (Math.random() - 0.5) * range, 0.05, 0.95);
+      c.setHSL(hsl.h, hsl.s, hsl.l);
+      return c.getHex();
+    }
+
+    const PALETTE = {
+      deepRock: 0x334155,
+      cliffRock: 0x475569,
+      lightRock: 0x64748b,
+      mossRock: 0x3f6212,
+      sand: 0xfde68a,
+      wetSand: 0xd97706,
+      dirt: 0x78350f,
+      grassTop: 0x4ade80,
+      grassMid: 0x22c55e,
+      grassDark: 0x15803d,
+      stairs: 0x94a3b8,
+      stairBorder: 0x64748b,
+      pagodaBase: 0xcbd5e1,
+      pagodaWood: 0x7c2d12,
+      pagodaCrimson: 0xdc2626,
+      pagodaWall: 0xfef3c7,
+      pagodaRoof: 0x1e293b,
+      pagodaRoofEdge: 0x334155,
+      gold: 0xfacc15,
+      sakuraTrunk: 0x5c3a21,
+      sakuraPink1: 0xf9a8d4,
+      sakuraPink2: 0xf472b6,
+      sakuraWhite: 0xfce7f3,
+      pineTrunk: 0x451a03,
+      pineLeaf1: 0x065f46,
+      pineLeaf2: 0x047857,
+      bamboo: 0x65a30d,
+      lanternGlow: 0xfef08a
+    };
+
+    // ----------------------------------------------------------------------------
+    // 4A. GENERATE ISLAND TERRAIN, CLIFFS, WATERFALL CHANNEL & STAIRCASE
+    // ----------------------------------------------------------------------------
+    const WORLD_RADIUS = 28;
+    const surfaceHeightMap = new Map();
+
+    for (let x = -WORLD_RADIUS; x <= WORLD_RADIUS; x++) {
+      for (let z = -WORLD_RADIUS; z <= WORLD_RADIUS; z++) {
+        const dist = Math.sqrt(x * x + z * z);
+        if (dist > WORLD_RADIUS - 1.5) continue;
+
+        const n = fbm((x + 50) * 0.08, (z + 50) * 0.08);
+        const radialFalloff = Math.max(0, 1 - Math.pow(dist / (WORLD_RADIUS - 3), 2.15));
+
+        // Main island height
+        let h = Math.floor(radialFalloff * 13 + (n - 0.5) * 6);
+
+        // Flat plaza plateau in center-east for the Japanese Pagoda (around x: 2..10, z: -4..4)
+        const distPagoda = Math.hypot(x - 5, z - 0);
+        if (distPagoda < 6.5) {
+          h = 10;
+        } else if (distPagoda < 9.5) {
+          const t = (distPagoda - 6.5) / 3.0;
+          h = Math.round(10 * (1 - t) + h * t);
+        }
+
+        // High rocky mountain peak in Northwest (x: -9, z: -9) for Waterfall Source
+        const distPeak = Math.hypot(x + 9, z + 9);
+        if (distPeak < 7.5) {
+          const peakBoost = Math.cos((distPeak / 7.5) * (Math.PI / 2)) * 11;
+          h = Math.max(h, Math.round(8 + peakBoost));
+        }
+
+        // Carve waterfall river gorge from (-8, -8) flowing toward (-2, 8) into Southern bay
+        // River path parameterized by z from -8 to +16
+        if (z >= -8 && z <= 18) {
+          const riverCenterX = -8 + ((z + 8) / 26) * 5.5 + Math.sin(z * 0.35) * 1.1;
+          const distRiver = Math.abs(x - riverCenterX);
+          if (distRiver < 1.9) {
+            if (z < -1) {
+              // Upper mountain stream bed at y = 14
+              h = Math.min(h, 13);
+            } else if (z <= 2) {
+              // Steep cliff drop zone
+              h = Math.min(h, 6);
+            } else {
+              // Lower pool channel
+              h = Math.min(h, 0);
+            }
+          }
+        }
+
+        if (h < 1) continue; // Below water level (water sits at y = 0.6)
+
+        surfaceHeightMap.set(`${x},${z}`, h);
+
+        // Fill column from y = 0 up to h (hollowing deep unseen interior for performance)
+        const minY = Math.max(0, h - 5);
+        for (let y = 0; y <= h; y++) {
+          if (y > 1 && y < minY && dist < WORLD_RADIUS - 6) continue;
+
+          let col = PALETTE.cliffRock;
+          if (y === h) {
+            if (h <= 1) {
+              col = varyColor(PALETTE.sand, 0.04);
+            } else if (h >= 15 && Math.random() > 0.35) {
+              col = varyColor(PALETTE.lightRock, 0.06);
+            } else {
+              col = varyColor((x + z) % 2 === 0 ? PALETTE.grassTop : PALETTE.grassMid, 0.05);
+            }
+          } else if (y === h - 1 && h > 2 && h < 15) {
+            col = varyColor(PALETTE.dirt, 0.04);
+          } else {
+            col = varyColor(y % 3 === 0 ? PALETTE.deepRock : PALETTE.cliffRock, 0.05);
+          }
+          setVoxel(x, y, z, col);
+        }
+      }
+    }
+
+    // Add Stone Staircase leading from the southern shore (z=17, x=5) up to the Pagoda Plaza (z=6, x=5)
+    for (let z = 6; z <= 17; z++) {
+      const progress = (17 - z) / 11; // 0 at shore, 1 at plaza
+      const stepY = Math.max(1, Math.round(1 + progress * 9));
+      for (let dx = -1; dx <= 1; dx++) {
+        const sx = 5 + dx;
+        for (let y = 1; y <= stepY; y++) {
+          setVoxel(sx, y, z, dx === 0 ? PALETTE.stairs : PALETTE.stairBorder);
+        }
+        // Clear any overhanging terrain above the steps
+        for (let y = stepY + 1; y <= 15; y++) {
+          removeVoxel(sx, y, z);
+        }
+      }
+      // Stone balustrade posts along stairs
+      if (z % 3 === 0) {
+        setVoxel(3, stepY + 1, z, PALETTE.stairBorder);
+        setVoxel(7, stepY + 1, z, PALETTE.stairBorder);
+        if (z === 9 || z === 15) {
+          setVoxel(3, stepY + 2, z, PALETTE.lanternGlow, 'lantern');
+          setVoxel(7, stepY + 2, z, PALETTE.lanternGlow, 'lantern');
+          setVoxel(3, stepY + 3, z, PALETTE.pagodaRoof);
+          setVoxel(7, stepY + 3, z, PALETTE.pagodaRoof);
+        }
+      }
+    }
+
+    // Add Traditional Japanese Torii Gate at the bottom of the stairs (x=5, z=16, base y=2)
+    function buildToriiGate(cx, baseY, cz) {
+      for (let y = baseY; y <= baseY + 5; y++) {
+        setVoxel(cx - 2, y, cz, PALETTE.pagodaCrimson);
+        setVoxel(cx + 2, y, cz, PALETTE.pagodaCrimson);
+      }
+      // Lower crossbeam (Nuki)
+      for (let x = cx - 2; x <= cx + 2; x++) {
+        setVoxel(x, baseY + 4, cz, PALETTE.pagodaCrimson);
+      }
+      // Upper lintel (Kasagi) with upturned ends
+      for (let x = cx - 3; x <= cx + 3; x++) {
+        setVoxel(x, baseY + 5, cz, PALETTE.pagodaCrimson);
+        setVoxel(x, baseY + 6, cz, PALETTE.pagodaRoof);
+      }
+      setVoxel(cx - 4, baseY + 6, cz, PALETTE.pagodaCrimson);
+      setVoxel(cx + 4, baseY + 6, cz, PALETTE.pagodaCrimson);
+      setVoxel(cx - 4, baseY + 7, cz, PALETTE.pagodaRoof);
+      setVoxel(cx + 4, baseY + 7, cz, PALETTE.pagodaRoof);
+      // Center plaque
+      setVoxel(cx, baseY + 5, cz, PALETTE.gold);
+    }
+    buildToriiGate(5, 2, 16);
+    addLanternLight(5, 6, 15, 14);
+
+    // ----------------------------------------------------------------------------
+    // 4B. BUILD MULTI-STORY JAPANESE PAGODA (五重塔) WITH EAVES & GLOWING LANTERNS
+    // ----------------------------------------------------------------------------
+    function buildPagoda(cx, baseY, cz) {
+      // Stone foundation platform (9x9)
+      for (let dx = -4; dx <= 4; dx++) {
+        for (let dz = -4; dz <= 4; dz++) {
+          setVoxel(cx + dx, baseY + 1, cz + dz, PALETTE.pagodaBase);
+        }
+      }
+
+      const tiers = [
+        { halfWall: 3, wallH: 3, roofSpan: 5 },
+        { halfWall: 2, wallH: 3, roofSpan: 4 },
+        { halfWall: 2, wallH: 2, roofSpan: 4 },
+        { halfWall: 1, wallH: 2, roofSpan: 3 }
+      ];
+
+      let curY = baseY + 2;
+
+      tiers.forEach((tier, idx) => {
+        const hw = tier.halfWall;
+        // Walls & Crimson Corner Pillars
+        for (let y = 0; y < tier.wallH; y++) {
+          for (let dx = -hw; dx <= hw; dx++) {
+            for (let dz = -hw; dz <= hw; dz++) {
+              const isEdge = Math.abs(dx) === hw || Math.abs(dz) === hw;
+              if (!isEdge) continue;
+              const isCorner = Math.abs(dx) === hw && Math.abs(dz) === hw;
+              const isDoor = y < 2 && ((dx === 0 && Math.abs(dz) === hw) || (dz === 0 && Math.abs(dx) === hw));
+              if (isDoor && idx === 0) {
+                setVoxel(cx + dx, curY + y, cz + dz, PALETTE.lanternGlow, 'lantern');
+              } else if (isCorner) {
+                setVoxel(cx + dx, curY + y, cz + dz, PALETTE.pagodaCrimson);
+              } else {
+                setVoxel(cx + dx, curY + y, cz + dz, (y === tier.wallH - 1) ? PALETTE.pagodaWood : PALETTE.pagodaWall);
+              }
+            }
+          }
+        }
+
+        curY += tier.wallH;
+
+        // Sloped Roof Layer 1 (Wide Eaves)
+        const rs = tier.roofSpan;
+        for (let dx = -rs; dx <= rs; dx++) {
+          for (let dz = -rs; dz <= rs; dz++) {
+            const isOuterRing = Math.abs(dx) === rs || Math.abs(dz) === rs;
+            const isCornerTip = Math.abs(dx) === rs && Math.abs(dz) === rs;
+            if (isCornerTip) {
+              // Upturned Oriental Roof Corner (飛簷)
+              setVoxel(cx + dx, curY + 1, cz + dz, PALETTE.pagodaRoof);
+              setVoxel(cx + dx, curY, cz + dz, PALETTE.gold);
+              // Hanging corner lantern on lower two tiers
+              if (idx < 2) {
+                setVoxel(cx + dx, curY - 1, cz + dz, PALETTE.lanternGlow, 'lantern');
+              }
+            } else {
+              setVoxel(
+                cx + dx,
+                curY,
+                cz + dz,
+                isOuterRing ? PALETTE.pagodaRoofEdge : PALETTE.pagodaRoof
+              );
+            }
+          }
+        }
+
+        // Sloped Roof Layer 2 (Upper step of roof)
+        const rs2 = rs - 1;
+        for (let dx = -rs2; dx <= rs2; dx++) {
+          for (let dz = -rs2; dz <= rs2; dz++) {
+            setVoxel(cx + dx, curY + 1, cz + dz, PALETTE.pagodaRoof);
+          }
+        }
+
+        curY += 2;
+      });
+
+      // Golden Sorin Spire / Finial at the top of the Pagoda
+      for (let sy = 0; sy < 6; sy++) {
+        setVoxel(cx, curY + sy, cz, sy % 2 === 0 ? PALETTE.gold : PALETTE.pagodaCrimson);
+      }
+      setVoxel(cx, curY + 6, cz, PALETTE.lanternGlow, 'lantern');
+
+      // Register warm point lights around the pagoda
+      addLanternLight(cx, baseY + 5, cz + 5, 18);
+      addLanternLight(cx, baseY + 5, cz - 5, 18);
+      addLanternLight(cx - 5, baseY + 12, cz, 18);
+      addLanternLight(cx + 5, baseY + 12, cz, 18);
+    }
+
+    buildPagoda(5, 10, 0);
+
+    // ----------------------------------------------------------------------------
+    // 4C. BUILD WATERFALL STREAM VOXELS (FROM NW MOUNTAIN PEAK TO LAKE)
+    // ----------------------------------------------------------------------------
+    // Upper river stream on mountain & vertical cascade down the cliff
+    for (let z = -8; z <= 3; z++) {
+      const riverCenterX = Math.round(-8 + ((z + 8) / 26) * 5.5 + Math.sin(z * 0.35) * 1.1);
+      if (z < -1) {
+        // Upper stream bed
+        for (let dx = -1; dx <= 1; dx++) {
+          waterfallStreamVoxels.push({
+            x: riverCenterX + dx,
+            y: 13.6,
+            z: z,
+            phase: z * 0.6 + dx,
+            isCascade: false
+          });
+        }
+      } else if (z >= -1 && z <= 1) {
+        // Multi-step vertical waterfall cascade from y=13 down to y=1
+        for (let y = 1; y <= 13; y++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const zOffset = Math.floor((13 - y) / 4);
+            waterfallStreamVoxels.push({
+              x: riverCenterX + dx,
+              y: y,
+              z: -1 + zOffset,
+              phase: y * 0.5 + dx,
+              isCascade: true
+            });
+          }
+        }
+      }
+    }
+
+    // Wooden Arch Bridge crossing the lower waterfall cove (around x: -6..-1, z: 7)
+    for (let bx = -7; bx <= -1; bx++) {
+      const arch = Math.round(Math.sin(((bx + 7) / 6) * Math.PI) * 2);
+      const by = 3 + arch;
+      for (let bz = 6; bz <= 8; bz++) {
+        if (bz === 7) {
+          setVoxel(bx, by, bz, PALETTE.pagodaWood);
+        } else {
+          // Red bridge railings
+          setVoxel(bx, by, bz, PALETTE.pagodaCrimson);
+          if (bx % 2 === 0) {
+            setVoxel(bx, by + 1, bz, PALETTE.pagodaCrimson);
+          }
+        }
+      }
+    }
+    setVoxel(-4, 7, 6, PALETTE.lanternGlow, 'lantern');
+    setVoxel(-4, 7, 8, PALETTE.lanternGlow, 'lantern');
+    addLanternLight(-4, 8, 7, 14);
+
+    // ----------------------------------------------------------------------------
+    // 4D. NATURAL ECOSYSTEM: SAKURA TREES, PINE TREES, BUSHES & STONE LANTERNS
+    // ----------------------------------------------------------------------------
+    function buildSakuraTree(tx, ty, tz, scale = 1.0) {
+      const trunkH = Math.round(4 * scale + Math.random() * 1.5);
+      let cx = tx;
+      let cz = tz;
+      for (let y = 1; y <= trunkH; y++) {
+        setVoxel(cx, ty + y, cz, PALETTE.sakuraTrunk);
+        if (y === Math.ceil(trunkH * 0.6) && Math.random() > 0.4) {
+          cx += Math.random() > 0.5 ? 1 : -1;
+          setVoxel(cx, ty + y, cz, PALETTE.sakuraTrunk);
+        }
+      }
+      // Lush blossom canopy
+      const r = Math.round(2.6 * scale);
+      const topY = ty + trunkH + 1;
+      for (let dx = -r - 1; dx <= r + 1; dx++) {
+        for (let dy = -1; dy <= r; dy++) {
+          for (let dz = -r - 1; dz <= r + 1; dz++) {
+            const dist = Math.sqrt(dx * dx + dy * dy * 1.4 + dz * dz);
+            if (dist <= r + 0.45 && Math.random() > 0.16) {
+              const pRand = Math.random();
+              const leafCol = pRand < 0.5
+                ? PALETTE.sakuraPink1
+                : pRand < 0.85
+                  ? PALETTE.sakuraPink2
+                  : PALETTE.sakuraWhite;
+              setVoxel(cx + dx, topY + dy, cz + dz, varyColor(leafCol, 0.04));
+            }
+          }
+        }
+      }
+    }
+
+    function buildPineTree(tx, ty, tz, layers = 4) {
+      const trunkH = layers * 2 + 1;
+      for (let y = 1; y <= trunkH; y++) {
+        setVoxel(tx, ty + y, tz, PALETTE.pineTrunk);
+      }
+      let curY = ty + 3;
+      for (let l = 0; l < layers; l++) {
+        const radius = Math.max(1, layers - l);
+        for (let dx = -radius; dx <= radius; dx++) {
+          for (let dz = -radius; dz <= radius; dz++) {
+            if (Math.abs(dx) + Math.abs(dz) <= radius + 1) {
+              setVoxel(tx + dx, curY, tz + dz, varyColor(PALETTE.pineLeaf1, 0.04));
+            }
+            if (Math.abs(dx) + Math.abs(dz) <= radius) {
+              setVoxel(tx + dx, curY + 1, tz + dz, varyColor(PALETTE.pineLeaf2, 0.04));
+            }
+          }
+        }
+        curY += 2;
+      }
+      setVoxel(tx, curY, tz, PALETTE.pineLeaf2);
+      setVoxel(tx, curY + 1, tz, PALETTE.pineLeaf1);
+    }
+
+    function buildBush(bx, by, bz) {
+      setVoxel(bx, by + 1, bz, varyColor(PALETTE.grassDark, 0.05));
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      dirs.forEach(([dx, dz]) => {
+        if (Math.random() > 0.35) {
+          setVoxel(bx + dx, by + 1, bz + dz, varyColor(PALETTE.grassMid, 0.05));
+        }
+      });
+    }
+
+    function buildStoneLantern(lx, ly, lz) {
+      setVoxel(lx, ly + 1, lz, PALETTE.stairBorder);
+      setVoxel(lx, ly + 2, lz, PALETTE.lanternGlow, 'lantern');
+      setVoxel(lx, ly + 3, lz, PALETTE.pagodaRoof);
+      addLanternLight(lx, ly + 2.5, lz, 11);
+    }
+
+    // Place curated Sakura Trees around the island & pagoda
+    const sakuraSpots = [
+      [-2, -3, 1.15],
+      [12, -5, 1.1],
+      [13, 5, 1.0],
+      [-11, 4, 1.05],
+      [-14, -2, 0.95],
+      [0, 11, 0.95],
+      [10, 11, 0.9]
+    ];
+    sakuraSpots.forEach(([x, z, sc]) => {
+      const h = surfaceHeightMap.get(`${x},${z}`);
+      if (h && h >= 2) buildSakuraTree(x, h, z, sc);
+    });
+
+    // Place Pine Trees on the higher northern & western ridges
+    const pineSpots = [
+      [-13, -11, 4],
+      [-5, -14, 4],
+      [-16, -6, 3],
+      [2, -13, 3],
+      [9, -12, 4],
+      [-12, 11, 3],
+      [16, -1, 3]
+    ];
+    pineSpots.forEach(([x, z, layers]) => {
+      const h = surfaceHeightMap.get(`${x},${z}`);
+      if (h && h >= 3) buildPineTree(x, h, z, layers);
+    });
+
+    // Place Stone Lanterns & Bushes along paths
+    const lanternSpots = [
+      [-1, 4],
+      [11, 4],
+      [-1, -5],
+      [11, -5],
+      [-9, 7]
+    ];
+    lanternSpots.forEach(([x, z]) => {
+      const h = surfaceHeightMap.get(`${x},${z}`);
+      if (h && h >= 2) buildStoneLantern(x, h, z);
+    });
+
+    for (let i = 0; i < 38; i++) {
+      const bx = Math.floor((Math.random() - 0.5) * 40);
+      const bz = Math.floor((Math.random() - 0.5) * 40);
+      if (Math.hypot(bx - 5, bz) < 6.5) continue; // Keep pagoda plaza clean
+      const h = surfaceHeightMap.get(`${bx},${bz}`);
+      if (h && h >= 2 && h <= 12) {
+        buildBush(bx, h, bz);
+      }
+    }
+
+    // ============================================================================
+    // 5. INSTANCED MESH BUILDER FOR HIGH-DENSITY VOXELS (60 FPS PERFORMANCE)
+    // ============================================================================
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const dummy = new THREE.Object3D();
+    const tempColor = new THREE.Color();
+
+    // Reserve capacity for user-placed interactive sandbox blocks (+500 extra slots)
+    const MAX_CUSTOM_VOXELS = 500;
+    const baseSolidArray = Array.from(solidVoxels.values());
+    const totalSolidCapacity = baseSolidArray.length + MAX_CUSTOM_VOXELS;
+
+    const solidMaterial = new THREE.MeshStandardMaterial({
+      map: voxelTexture,
+      roughness: 0.78,
+      metalness: 0.06
+    });
+
+    const terrainInstancedMesh = new THREE.InstancedMesh(boxGeo, solidMaterial, totalSolidCapacity);
+    terrainInstancedMesh.castShadow = true;
+    terrainInstancedMesh.receiveShadow = true;
+    scene.add(terrainInstancedMesh);
+
+    // Populate initial terrain & architecture instances
+    let currentSolidCount = baseSolidArray.length;
+    for (let i = 0; i < currentSolidCount; i++) {
+      const v = baseSolidArray[i];
+      dummy.position.set(v.x, v.y, v.z);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      terrainInstancedMesh.setMatrixAt(i, dummy.matrix);
+      terrainInstancedMesh.setColorAt(i, tempColor.setHex(v.color));
+    }
+    terrainInstancedMesh.count = currentSolidCount;
+    terrainInstancedMesh.instanceMatrix.needsUpdate = true;
+    terrainInstancedMesh.instanceColor.needsUpdate = true;
+
+    // Emissive Lantern Voxels InstancedMesh
+    const lanternMaterial = new THREE.MeshStandardMaterial({
+      color: 0xfffbeb,
+      emissive: 0xffaa22,
+      emissiveIntensity: 1.2,
+      roughness: 0.3
+    });
+    const lanternInstancedMesh = new THREE.InstancedMesh(
+      boxGeo,
+      lanternMaterial,
+      emissiveLanternVoxels.length + 100
+    );
+    emissiveLanternVoxels.forEach((v, idx) => {
+      dummy.position.set(v.x, v.y, v.z);
+      dummy.scale.set(0.88, 0.92, 0.88);
+      dummy.updateMatrix();
+      lanternInstancedMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    lanternInstancedMesh.count = emissiveLanternVoxels.length;
+    lanternInstancedMesh.instanceMatrix.needsUpdate = true;
+    scene.add(lanternInstancedMesh);
+
+    // ============================================================================
+    // 6. DYNAMIC VOXEL WATER LAKE, WATERFALL CASCADE & SPLASH FOAM PARTICLES
+    // ============================================================================
+    const waterCoords = [];
+    const LAKE_RADIUS = 33;
+    for (let x = -LAKE_RADIUS; x <= LAKE_RADIUS; x++) {
+      for (let z = -LAKE_RADIUS; z <= LAKE_RADIUS; z++) {
+        const r = Math.sqrt(x * x + z * z);
+        if (r > LAKE_RADIUS) continue;
+        // Skip coordinates where solid island base is above water
+        if (solidVoxels.has(`${x},1,${z}`) && solidVoxels.has(`${x},2,${z}`)) continue;
+        waterCoords.push({
+          x,
+          z,
+          dist: r,
+          nearShore: solidVoxels.has(`${x + 1},1,${z}`) ||
+                     solidVoxels.has(`${x - 1},1,${z}`) ||
+                     solidVoxels.has(`${x},1,${z + 1}`) ||
+                     solidVoxels.has(`${x},1,${z - 1}`)
+        });
+      }
+    }
+
+    const waterMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x0ea5e9,
+      roughness: 0.14,
+      metalness: 0.1,
+      reflectivity: 0.9,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.12,
+      transparent: true,
+      opacity: 0.78
+    });
+
+    const waterInstancedMesh = new THREE.InstancedMesh(boxGeo, waterMaterial, waterCoords.length);
+    waterInstancedMesh.receiveShadow = true;
+    scene.add(waterInstancedMesh);
+
+    // Initialize water colors (lighter turquoise near shore & waterfall pool)
+    waterCoords.forEach((w, i) => {
+      const distSplash = Math.hypot(w.x + 5.5, w.z - 2);
+      if (distSplash < 4.5) {
+        tempColor.setHex(0x7dd3fc);
+      } else if (w.nearShore) {
+        tempColor.setHex(0x38bdf8);
+      } else {
+        tempColor.setHex(0x0284c7);
+      }
+      waterInstancedMesh.setColorAt(i, tempColor);
+    });
+    waterInstancedMesh.instanceColor.needsUpdate = true;
+
+    // Waterfall Cascade InstancedMesh
+    const waterfallMat = new THREE.MeshPhysicalMaterial({
+      color: 0xbae6fd,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.15,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.86
+    });
+    const waterfallMesh = new THREE.InstancedMesh(boxGeo, waterfallMat, waterfallStreamVoxels.length);
+    scene.add(waterfallMesh);
+
+    // Waterfall Splash Foam Particles (at the base of the waterfall around x=-5.5, y=1.0, z=2.0)
+    const SPLASH_COUNT = 85;
+    const splashParticles = [];
+    const splashMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.88
+    });
+    const splashMesh = new THREE.InstancedMesh(boxGeo, splashMat, SPLASH_COUNT);
+    scene.add(splashMesh);
+
+    for (let i = 0; i < SPLASH_COUNT; i++) {
+      splashParticles.push({
+        x: -5.8 + (Math.random() - 0.5) * 3.4,
+        y: 0.8 + Math.random() * 2.5,
+        z: 1.5 + (Math.random() - 0.5) * 2.4,
+        vx: (Math.random() - 0.5) * 1.8,
+        vy: 2.2 + Math.random() * 3.2,
+        vz: 0.8 + Math.random() * 2.2,
+        scale: 0.18 + Math.random() * 0.28,
+        age: Math.random()
+      });
+    }
+
+    // Update UI stats counters
+    document.getElementById('voxel-count').textContent = (currentSolidCount + emissiveLanternVoxels.length).toLocaleString();
+    document.getElementById('water-count').textContent = (waterCoords.length + waterfallStreamVoxels.length).toLocaleString();
+
+    // ============================================================================
+    // 7. 3D VOXEL CLOUDS, WEATHER PARTICLES (RAIN / SNOW), SAKURA PETALS & FIREFLIES
+    // ============================================================================
+    // 7A. Drifting 3D Voxel Clouds
+    const cloudVoxels = [];
+    const cloudCenters = [
+      { cx: -18, cy: 26, cz: -12, rx: 5, rz: 3, speed: 1.1 },
+      { cx: 14, cy: 28, cz: -16, rx: 6, rz: 3.5, speed: 0.85 },
+      { cx: 20, cy: 25, cz: 10, rx: 5, rz: 3, speed: 1.25 },
+      { cx: -15, cy: 27, cz: 15, rx: 6, rz: 3, speed: 0.95 },
+      { cx: 0, cy: 30, cz: 2, rx: 5.5, rz: 3, speed: 1.05 }
+    ];
+
+    cloudCenters.forEach((c, cIdx) => {
+      for (let dx = -c.rx; dx <= c.rx; dx++) {
+        for (let dy = 0; dy <= 2; dy++) {
+          for (let dz = -c.rz; dz <= c.rz; dz++) {
+            const norm = (dx * dx) / (c.rx * c.rx) + (dy * dy) / 3.5 + (dz * dz) / (c.rz * c.rz);
+            if (norm <= 0.95) {
+              cloudVoxels.push({
+                baseX: c.cx + dx,
+                baseY: c.cy + dy,
+                baseZ: c.cz + dz,
+                cloudIdx: cIdx,
+                speed: c.speed
+              });
+            }
+          }
+        }
+      }
+    });
+
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.95,
+      transparent: true,
+      opacity: 0.88
+    });
+    const cloudMesh = new THREE.InstancedMesh(boxGeo, cloudMat, cloudVoxels.length);
+    cloudMesh.castShadow = true;
+    scene.add(cloudMesh);
+
+    // 7B. Weather Particles (Rain & Snow Voxels)
+    const WEATHER_PARTICLE_COUNT = 550;
+    const weatherParticles = [];
+    const weatherMat = new THREE.MeshBasicMaterial({
+      color: 0xe0f2fe,
+      transparent: true,
+      opacity: 0.85
+    });
+    const weatherMesh = new THREE.InstancedMesh(boxGeo, weatherMat, WEATHER_PARTICLE_COUNT);
+    weatherMesh.visible = false;
+    scene.add(weatherMesh);
+
+    for (let i = 0; i < WEATHER_PARTICLE_COUNT; i++) {
+      weatherParticles.push({
+        x: (Math.random() - 0.5) * 68,
+        y: Math.random() * 36,
+        z: (Math.random() - 0.5) * 68,
+        speed: 0.8 + Math.random() * 0.5,
+        drift: Math.random() * Math.PI * 2
+      });
+    }
+
+    // 7C. Nocturnal Fireflies & Floating Sakura Petals
+    const AMBIENT_PARTICLE_COUNT = 90;
+    const ambientParticles = [];
+    const ambientMat = new THREE.MeshBasicMaterial({
+      color: 0xf9a8d4
+    });
+    const ambientMesh = new THREE.InstancedMesh(boxGeo, ambientMat, AMBIENT_PARTICLE_COUNT);
+    scene.add(ambientMesh);
+
+    for (let i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+      ambientParticles.push({
+        x: (Math.random() - 0.5) * 44,
+        y: 2 + Math.random() * 16,
+        z: (Math.random() - 0.5) * 44,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.4 + Math.random() * 0.6
+      });
+    }
+
+    // ============================================================================
+    // 8. TIME OF DAY & WEATHER STATE ENGINE
+    // ============================================================================
+    let currentTimeHours = 6.5; // Default: Dawn (06:30)
+    let autoCycleTime = false;
+    let currentWeather = 'sunny'; // 'sunny' | 'rain' | 'snow' | 'fog'
+
+    const TIME_PRESETS = {
+      dawn: { hours: 6.5, label: '清晨' },
+      noon: { hours: 12.5, label: '正午' },
+      dusk: { hours: 17.8, label: '黃昏' },
+      night: { hours: 22.0, label: '夜晚' }
+    };
+
+    const WEATHER_LABELS = {
+      sunny: '晴朗無雲',
+      rain: '微雨綿綿',
+      snow: '瑞雪紛飛',
+      fog: '濃霧瀰漫'
+    };
+
+    // Keyframe stops for smooth 24-hour interpolation
+    const SKY_KEYFRAMES = [
+      {
+        h: 0,
+        top: '#070b19', mid: '#0f172a', bot: '#1e1b4b',
+        sunCol: 0x3b82f6, sunInt: 0.18,
+        hemiSky: 0x1e293b, hemiGround: 0x0f172a, hemiInt: 0.32,
+        fogCol: 0x0f172a, nightFactor: 1.0
+      },
+      {
+        h: 6.2,
+        top: '#3b4278', mid: '#f472b6', bot: '#fed7aa',
+        sunCol: 0xffb482, sunInt: 0.95,
+        hemiSky: 0xfbcfe8, hemiGround: 0x475569, hemiInt: 0.65,
+        fogCol: 0xfbcfe8, nightFactor: 0.25
+      },
+      {
+        h: 12.5,
+        top: '#0284c7', mid: '#38bdf8', bot: '#e0f2fe',
+        sunCol: 0xfffbeb, sunInt: 1.35,
+        hemiSky: 0xe0f2fe, hemiGround: 0x334155, hemiInt: 0.82,
+        fogCol: 0xdbeafe, nightFactor: 0.0
+      },
+      {
+        h: 17.8,
+        top: '#311042', mid: '#ea580c', bot: '#fde047',
+        sunCol: 0xf97316, sunInt: 1.05,
+        hemiSky: 0xfdba74, hemiGround: 0x27272a, hemiInt: 0.6,
+        fogCol: 0xfed7aa, nightFactor: 0.55
+      },
+      {
+        h: 21.0,
+        top: '#070b19', mid: '#1e1b4b', bot: '#312e81',
+        sunCol: 0x60a5fa, sunInt: 0.22,
+        hemiSky: 0x1e293b, hemiGround: 0x0f172a, hemiInt: 0.35,
+        fogCol: 0x111827, nightFactor: 1.0
+      },
+      {
+        h: 24.0,
+        top: '#070b19', mid: '#0f172a', bot: '#1e1b4b',
+        sunCol: 0x3b82f6, sunInt: 0.18,
+        hemiSky: 0x1e293b, hemiGround: 0x0f172a, hemiInt: 0.32,
+        fogCol: 0x0f172a, nightFactor: 1.0
+      }
+    ];
+
+    function lerpHexColor(hexA, hexB, t) {
+      const cA = new THREE.Color(hexA);
+      const cB = new THREE.Color(hexB);
+      return cA.lerp(cB, t);
+    }
+
+    function formatHours(h) {
+      const hrs = Math.floor(h) % 24;
+      const mins = Math.floor((h - Math.floor(h)) * 60);
+      const period =
+        hrs >= 5 && hrs < 9 ? '清晨' :
+        hrs >= 9 && hrs < 16 ? '正午' :
+        hrs >= 16 && hrs < 19 ? '黃昏' : '夜晚';
+      return {
+        clock: `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`,
+        period
+      };
+    }
+
+    let currentNightFactor = 0.2;
+
+    function updateEnvironmentState() {
+      // Find surrounding keyframes
+      let k0 = SKY_KEYFRAMES[0];
+      let k1 = SKY_KEYFRAMES[1];
+      for (let i = 0; i < SKY_KEYFRAMES.length - 1; i++) {
+        if (currentTimeHours >= SKY_KEYFRAMES[i].h && currentTimeHours <= SKY_KEYFRAMES[i + 1].h) {
+          k0 = SKY_KEYFRAMES[i];
+          k1 = SKY_KEYFRAMES[i + 1];
+          break;
+        }
+      }
+      const span = Math.max(0.001, k1.h - k0.h);
+      const t = (currentTimeHours - k0.h) / span;
+
+      currentNightFactor = THREE.MathUtils.lerp(k0.nightFactor, k1.nightFactor, t);
+
+      // Weather modifiers
+      const isOvercast = currentWeather === 'rain' || currentWeather === 'fog';
+      const weatherDim = currentWeather === 'rain' ? 0.65 : currentWeather === 'fog' ? 0.75 : 1.0;
+
+      // Sky gradient colors
+      const topC = lerpHexColor(k0.top, k1.top, t);
+      const midC = lerpHexColor(k0.mid, k1.mid, t);
+      const botC = lerpHexColor(k0.bot, k1.bot, t);
+
+      if (isOvercast) {
+        const grayMix = new THREE.Color(currentNightFactor > 0.5 ? '#1e293b' : '#94a3b8');
+        topC.lerp(grayMix, 0.55);
+        midC.lerp(grayMix, 0.65);
+        botC.lerp(grayMix, 0.6);
+      }
+
+      skyBackdrop.style.background = `linear-gradient(180deg, #${topC.getHexString()} 0%, #${midC.getHexString()} 55%, #${botC.getHexString()} 100%)`;
+
+      // Sun & Moon orbital position
+      // Sun rises at 6:00 (angle 0) and sets at 18:00 (angle PI)
+      const sunAngle = ((currentTimeHours - 6) / 24) * Math.PI * 2;
+      const orbitR = 68;
+      const sx = Math.cos(sunAngle) * orbitR;
+      const sy = Math.sin(sunAngle) * orbitR;
+      const sz = 24 * Math.sin(sunAngle * 0.5);
+
+      sunMesh.position.set(sx, sy, sz);
+      moonMesh.position.set(-sx, -sy, -sz);
+
+      // Keep directional shadow caster above horizon (switches from sun to moon at night)
+      if (sy >= 4) {
+        sunLight.position.set(sx, Math.max(14, sy), sz);
+      } else {
+        sunLight.position.set(-sx, Math.max(18, -sy), -sz);
+      }
+
+      // Interpolate lights
+      sunLight.color.copy(lerpHexColor(k0.sunCol, k1.sunCol, t));
+      sunLight.intensity = THREE.MathUtils.lerp(k0.sunInt, k1.sunInt, t) * weatherDim;
+
+      hemiLight.color.copy(lerpHexColor(k0.hemiSky, k1.hemiSky, t));
+      hemiLight.groundColor.copy(lerpHexColor(k0.hemiGround, k1.hemiGround, t));
+      hemiLight.intensity = THREE.MathUtils.lerp(k0.hemiInt, k1.hemiInt, t) * weatherDim;
+
+      // Fog color & density
+      const fogCol = lerpHexColor(k0.fogCol, k1.fogCol, t);
+      if (currentWeather === 'fog') {
+        fogCol.lerp(new THREE.Color(currentNightFactor > 0.5 ? 0x334155 : 0xe2e8f0), 0.7);
+        scene.fog.density = 0.0165;
+      } else if (currentWeather === 'rain') {
+        fogCol.lerp(new THREE.Color(0x475569), 0.45);
+        scene.fog.density = 0.0075;
+      } else if (currentWeather === 'snow') {
+        fogCol.lerp(new THREE.Color(0xf1f5f9), 0.35);
+        scene.fog.density = 0.0065;
+      } else {
+        scene.fog.density = 0.0038;
+      }
+      scene.fog.color.copy(fogCol);
+
+      // Cloud tinting
+      cloudMat.color.copy(lerpHexColor(0xffffff, 0x94a3b8, currentNightFactor * 0.65 + (isOvercast ? 0.3 : 0)));
+      cloudMat.opacity = currentWeather === 'fog' ? 0.95 : 0.86;
+
+      // Lantern glow & point lights automatically brighten at dusk & night
+      const lanternGlowPower = THREE.MathUtils.smoothstep(currentNightFactor, 0.1, 0.85);
+      lanternMaterial.emissiveIntensity = 0.45 + lanternGlowPower * 2.2;
+      lanternPointLights.forEach((pl) => {
+        pl.intensity = lanternGlowPower * 1.65;
+      });
+
+      // Ambient particles switch between daytime pink Sakura Petals and nocturnal glowing Fireflies
+      if (currentNightFactor > 0.45) {
+        ambientMat.color.setHex(0xbef264); // Warm chartreuse firefly glow
+      } else {
+        ambientMat.color.setHex(0xf9a8d4); // Sakura petal pink
+      }
+
+      // Update UI labels
+      const { clock, period } = formatHours(currentTimeHours);
+      document.getElementById('time-display').textContent = `${clock} ${period}`;
+      document.getElementById('weather-display').textContent = WEATHER_LABELS[currentWeather];
+      document.getElementById('status-label').textContent = `${period} / ${WEATHER_LABELS[currentWeather]}`;
+    }
+
+    updateEnvironmentState();
+
+    // ============================================================================
+    // 9. INTERACTIVE SANDBOX VOXEL PLACEMENT / REMOVAL (RAYCASTER)
+    // ============================================================================
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let activeBrushType = 'sakura';
+    let pointerDownPos = { x: 0, y: 0 };
+    const customVoxelStack = []; // Keep track of user-added indices
+
+    const BRUSH_COLORS = {
+      sakura: PALETTE.sakuraPink1,
+      grass: PALETTE.grassTop,
+      stone: PALETTE.lightRock,
+      wood: PALETTE.pagodaWood,
+      crimson: PALETTE.pagodaCrimson,
+      roof: PALETTE.pagodaRoof,
+      gold: PALETTE.gold,
+      lantern: PALETTE.lanternGlow
+    };
+
+    // Wireframe preview box on hover
+    const hoverBox = new THREE.Mesh(
+      new THREE.BoxGeometry(1.04, 1.04, 1.04),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.45 })
+    );
+    hoverBox.visible = false;
+    scene.add(hoverBox);
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObject(terrainInstancedMesh);
+      if (hits.length > 0 && hits[0].distance < 95) {
+        const hit = hits[0];
+        const mat = new THREE.Matrix4();
+        terrainInstancedMesh.getMatrixAt(hit.instanceId, mat);
+        const pos = new THREE.Vector3().setFromMatrixPosition(mat);
+        if (e.shiftKey) {
+          hoverBox.position.copy(pos);
+          hoverBox.material.color.setHex(0xf43f5e);
+        } else {
+          hoverBox.position.copy(pos).add(hit.face.normal);
+          hoverBox.material.color.setHex(0xffffff);
+        }
+        hoverBox.visible = true;
+      } else {
+        hoverBox.visible = false;
+      }
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (moveDist > 5 || e.button !== 0) return; // Ignore camera drags
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const hits = raycaster.intersectObject(terrainInstancedMesh);
+      if (hits.length === 0) return;
+
+      const hit = hits[0];
+      const mat = new THREE.Matrix4();
+      terrainInstancedMesh.getMatrixAt(hit.instanceId, mat);
+      const blockPos = new THREE.Vector3().setFromMatrixPosition(mat);
+
+      if (e.shiftKey) {
+        // Shift + Click removes voxel by scaling its instance matrix to 0
+        dummy.position.set(0, -100, 0);
+        dummy.scale.set(0, 0, 0);
+        dummy.updateMatrix();
+        terrainInstancedMesh.setMatrixAt(hit.instanceId, dummy.matrix);
+        terrainInstancedMesh.instanceMatrix.needsUpdate = true;
+        hoverBox.visible = false;
+      } else {
+        // Normal Click adds a new voxel adjacent to clicked face
+        const newPos = blockPos.clone().add(hit.face.normal);
+        if (activeBrushType === 'lantern' && lanternInstancedMesh.count < emissiveLanternVoxels.length + 100) {
+          const idx = lanternInstancedMesh.count;
+          dummy.position.copy(newPos);
+          dummy.scale.set(0.88, 0.92, 0.88);
+          dummy.updateMatrix();
+          lanternInstancedMesh.setMatrixAt(idx, dummy.matrix);
+          lanternInstancedMesh.count++;
+          lanternInstancedMesh.instanceMatrix.needsUpdate = true;
+        } else if (currentSolidCount < totalSolidCapacity) {
+          const idx = currentSolidCount;
+          dummy.position.copy(newPos);
+          dummy.scale.set(1, 1, 1);
+          dummy.updateMatrix();
+          terrainInstancedMesh.setMatrixAt(idx, dummy.matrix);
+          terrainInstancedMesh.setColorAt(idx, tempColor.setHex(varyColor(BRUSH_COLORS[activeBrushType], 0.04)));
+          currentSolidCount++;
+          customVoxelStack.push(idx);
+          terrainInstancedMesh.count = currentSolidCount;
+          terrainInstancedMesh.instanceMatrix.needsUpdate = true;
+          terrainInstancedMesh.instanceColor.needsUpdate = true;
+        }
+        document.getElementById('voxel-count').textContent =
+          (currentSolidCount + lanternInstancedMesh.count).toLocaleString();
+      }
+    });
+
+    // ============================================================================
+    // 10. UI EVENT LISTENERS
+    // ============================================================================
+    const timeSlider = document.getElementById('time-slider');
+    const timeButtons = document.querySelectorAll('.time-btn');
+    const weatherButtons = document.querySelectorAll('.weather-btn');
+
+    timeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-time');
+        const preset = TIME_PRESETS[key];
+        if (!preset) return;
+        currentTimeHours = preset.hours;
+        timeSlider.value = currentTimeHours;
+        timeButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateEnvironmentState();
+      });
+    });
+
+    timeSlider.addEventListener('input', (e) => {
+      currentTimeHours = parseFloat(e.target.value);
+      timeButtons.forEach((b) => b.classList.remove('active'));
+      updateEnvironmentState();
+    });
+
+    weatherButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentWeather = btn.getAttribute('data-weather');
+        weatherButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        weatherMesh.visible = currentWeather === 'rain' || currentWeather === 'snow';
+        if (currentWeather === 'rain') {
+          weatherMat.color.setHex(0x93c5fd);
+          weatherMat.opacity = 0.72;
+        } else if (currentWeather === 'snow') {
+          weatherMat.color.setHex(0xffffff);
+          weatherMat.opacity = 0.92;
+        }
+        updateEnvironmentState();
+      });
+    });
+
+    // Camera Auto-Rotate Toggle
+    const btnAutoRotate = document.getElementById('btn-autorotate');
+    btnAutoRotate.addEventListener('click', () => {
+      userAutoRotateEnabled = !userAutoRotateEnabled;
+      controls.autoRotate = userAutoRotateEnabled;
+      btnAutoRotate.textContent = userAutoRotateEnabled ? '開啟中' : '已暫停';
+      btnAutoRotate.className = userAutoRotateEnabled
+        ? 'text-xs px-3 py-1 rounded-lg bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-medium transition'
+        : 'text-xs px-3 py-1 rounded-lg bg-slate-700/60 text-slate-300 border border-white/10 font-medium transition';
+    });
+
+    // Time Auto-Cycle Toggle
+    const btnAutoCycle = document.getElementById('btn-autocycle');
+    btnAutoCycle.addEventListener('click', () => {
+      autoCycleTime = !autoCycleTime;
+      btnAutoCycle.textContent = autoCycleTime ? '流逝中' : '已暫停';
+      btnAutoCycle.className = autoCycleTime
+        ? 'text-xs px-3 py-1 rounded-lg bg-pink-500/30 text-pink-200 border border-pink-400/40 font-medium transition'
+        : 'text-xs px-3 py-1 rounded-lg bg-slate-700/60 text-slate-300 border border-white/10 font-medium transition';
+    });
+
+    // Reset Camera View
+    document.getElementById('btn-reset-cam').addEventListener('click', () => {
+      camera.position.copy(DEFAULT_CAM_POS);
+      controls.target.copy(DEFAULT_CAM_TARGET);
+      controls.update();
+    });
+
+    // Collapse / Expand Control Panel
+    const btnTogglePanel = document.getElementById('btn-toggle-panel');
+    const panelBody = document.getElementById('panel-body');
+    let panelCollapsed = false;
+    btnTogglePanel.addEventListener('click', () => {
+      panelCollapsed = !panelCollapsed;
+      panelBody.style.display = panelCollapsed ? 'none' : 'block';
+      btnTogglePanel.textContent = panelCollapsed ? '展開' : '收合';
+    });
+
+    // Palette Swatches
+    const swatches = document.querySelectorAll('.palette-swatch');
+    swatches.forEach((sw) => {
+      sw.addEventListener('click', () => {
+        activeBrushType = sw.getAttribute('data-type');
+        swatches.forEach((s) => s.classList.remove('active'));
+        sw.classList.add('active');
+      });
+    });
+
+    // Clear Custom Blocks
+    document.getElementById('btn-clear-custom').addEventListener('click', () => {
+      currentSolidCount = baseSolidArray.length;
+      terrainInstancedMesh.count = currentSolidCount;
+      terrainInstancedMesh.instanceMatrix.needsUpdate = true;
+      lanternInstancedMesh.count = emissiveLanternVoxels.length;
+      lanternInstancedMesh.instanceMatrix.needsUpdate = true;
+      customVoxelStack.length = 0;
+      document.getElementById('voxel-count').textContent =
+        (currentSolidCount + lanternInstancedMesh.count).toLocaleString();
+    });
+
+    // Responsive Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ============================================================================
+    // 11. REAL-TIME ANIMATION LOOP (WATER WAVES, SPLASHES, CLOUDS, WEATHER, FPS)
+    // ============================================================================
+    const clock = new THREE.Clock();
+    let frameCount = 0;
+    let fpsAccumulator = 0;
+    const fpsBadge = document.getElementById('fps-badge');
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = Math.min(clock.getDelta(), 0.1);
+      const elapsed = clock.getElapsedTime();
+
+      // FPS counter update
+      frameCount++;
+      fpsAccumulator += delta;
+      if (fpsAccumulator >= 0.5) {
+        const fps = Math.min(60, Math.round(frameCount / fpsAccumulator));
+        fpsBadge.textContent = `${fps} FPS`;
+        frameCount = 0;
+        fpsAccumulator = 0;
+      }
+
+      // Optional continuous time-of-day progression
+      if (autoCycleTime) {
+        currentTimeHours = (currentTimeHours + delta * 0.45) % 24;
+        timeSlider.value = currentTimeHours.toFixed(2);
+        updateEnvironmentState();
+      }
+
+      // 1. Animate Lake Voxel Waves
+      for (let i = 0; i < waterCoords.length; i++) {
+        const w = waterCoords[i];
+        const wave =
+          Math.sin(w.x * 0.32 + elapsed * 2.1) * 0.14 +
+          Math.cos(w.z * 0.28 + elapsed * 1.7) * 0.12 +
+          Math.sin((w.dist - elapsed * 2.4) * 0.5) * 0.06;
+        dummy.position.set(w.x, 0.35 + wave, w.z);
+        dummy.scale.set(1.01, 0.85, 1.01);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        waterInstancedMesh.setMatrixAt(i, dummy.matrix);
+      }
+      waterInstancedMesh.instanceMatrix.needsUpdate = true;
+
+      // 2. Animate Waterfall Stream & Vertical Cascade
+      for (let i = 0; i < waterfallStreamVoxels.length; i++) {
+        const wf = waterfallStreamVoxels[i];
+        if (wf.isCascade) {
+          const dropOffset = ((elapsed * 6.5 + wf.phase) % 1.0) * 0.45;
+          const pulse = 0.85 + Math.sin(elapsed * 10 + wf.phase) * 0.18;
+          dummy.position.set(wf.x, wf.y - dropOffset, wf.z);
+          dummy.scale.set(0.95, pulse, 0.95);
+        } else {
+          const ripple = Math.sin(elapsed * 5 + wf.phase) * 0.08;
+          dummy.position.set(wf.x, wf.y + ripple, wf.z);
+          dummy.scale.set(1, 0.65, 1);
+        }
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        waterfallMesh.setMatrixAt(i, dummy.matrix);
+      }
+      waterfallMesh.instanceMatrix.needsUpdate = true;
+
+      // 3. Animate White Waterfall Splash / Foam Particles
+      for (let i = 0; i < SPLASH_COUNT; i++) {
+        const sp = splashParticles[i];
+        sp.age += delta * 1.45;
+        if (sp.age >= 1.0) {
+          sp.age = 0;
+          sp.x = -5.5 + (Math.random() - 0.5) * 3.2;
+          sp.y = 0.9;
+          sp.z = 1.3 + (Math.random() - 0.5) * 1.8;
+          sp.vx = (Math.random() - 0.5) * 2.2;
+          sp.vy = 2.6 + Math.random() * 3.0;
+          sp.vz = 0.7 + Math.random() * 2.2;
+        }
+        const px = sp.x + sp.vx * sp.age;
+        const py = sp.y + sp.vy * sp.age - 0.5 * 9.8 * sp.age * sp.age;
+        const pz = sp.z + sp.vz * sp.age;
+        const s = sp.scale * (1 - sp.age * 0.65);
+
+        dummy.position.set(px, Math.max(0.6, py), pz);
+        dummy.scale.set(s, s, s);
+        dummy.rotation.set(elapsed * 2, elapsed * 1.5, 0);
+        dummy.updateMatrix();
+        splashMesh.setMatrixAt(i, dummy.matrix);
+      }
+      splashMesh.instanceMatrix.needsUpdate = true;
+
+      // 4. Animate Drifting 3D Voxel Clouds
+      for (let i = 0; i < cloudVoxels.length; i++) {
+        const cv = cloudVoxels[i];
+        const driftX = ((cv.baseX + elapsed * cv.speed + 40) % 80) - 40;
+        const bobY = cv.baseY + Math.sin(elapsed * 0.8 + cv.cloudIdx) * 0.35;
+        dummy.position.set(driftX, bobY, cv.baseZ);
+        dummy.scale.set(1.02, 1.02, 1.02);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        cloudMesh.setMatrixAt(i, dummy.matrix);
+      }
+      cloudMesh.instanceMatrix.needsUpdate = true;
+
+      // 5. Animate Weather Particles (Rain / Snow)
+      if (weatherMesh.visible) {
+        const isRain = currentWeather === 'rain';
+        for (let i = 0; i < WEATHER_PARTICLE_COUNT; i++) {
+          const wp = weatherParticles[i];
+          if (isRain) {
+            wp.y -= delta * 28 * wp.speed;
+            wp.x -= delta * 3.5;
+            if (wp.y < 0.5) {
+              wp.y = 35;
+              wp.x = (Math.random() - 0.5) * 68;
+              wp.z = (Math.random() - 0.5) * 68;
+            }
+            dummy.position.set(wp.x, wp.y, wp.z);
+            dummy.scale.set(0.08, 0.95, 0.08);
+            dummy.rotation.set(0, 0, 0.12);
+          } else {
+            // Snowflakes
+            wp.y -= delta * 4.2 * wp.speed;
+            wp.x += Math.sin(elapsed * 1.5 + wp.drift) * delta * 1.4;
+            wp.z += Math.cos(elapsed * 1.3 + wp.drift) * delta * 1.4;
+            if (wp.y < 0.5) {
+              wp.y = 35;
+              wp.x = (Math.random() - 0.5) * 68;
+              wp.z = (Math.random() - 0.5) * 68;
+            }
+            dummy.position.set(wp.x, wp.y, wp.z);
+            dummy.scale.set(0.24, 0.24, 0.24);
+            dummy.rotation.set(elapsed, elapsed * 0.8, 0);
+          }
+          dummy.updateMatrix();
+          weatherMesh.setMatrixAt(i, dummy.matrix);
+        }
+        weatherMesh.instanceMatrix.needsUpdate = true;
+      }
+
+      // 6. Animate Sakura Petals (Day) / Glowing Fireflies (Night)
+      const isNight = currentNightFactor > 0.45;
+      for (let i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+        const ap = ambientParticles[i];
+        if (isNight) {
+          // Fireflies bobbing gently around trees and water
+          const fx = ap.x + Math.sin(elapsed * ap.speed + ap.phase) * 1.8;
+          const fy = 2.5 + (ap.y % 10) + Math.cos(elapsed * 1.4 + ap.phase) * 1.1;
+          const fz = ap.z + Math.cos(elapsed * ap.speed + ap.phase) * 1.8;
+          const pulse = 0.14 + Math.max(0, Math.sin(elapsed * 3.5 + ap.phase)) * 0.18;
+          dummy.position.set(fx, fy, fz);
+          dummy.scale.set(pulse, pulse, pulse);
+          dummy.rotation.set(0, 0, 0);
+        } else {
+          // Falling Sakura Blossom Petals
+          ap.y -= delta * 1.2 * ap.speed;
+          ap.x += Math.sin(elapsed * 1.6 + ap.phase) * delta * 0.9;
+          ap.z += Math.cos(elapsed * 1.2 + ap.phase) * delta * 0.9;
+          if (ap.y < 1.0) {
+            ap.y = 16 + Math.random() * 6;
+            ap.x = (Math.random() - 0.5) * 36;
+            ap.z = (Math.random() - 0.5) * 36;
+          }
+          dummy.position.set(ap.x, ap.y, ap.z);
+          dummy.scale.set(0.18, 0.06, 0.18);
+          dummy.rotation.set(elapsed * 2 + ap.phase, elapsed * 1.5, ap.phase);
+        }
+        dummy.updateMatrix();
+        ambientMesh.setMatrixAt(i, dummy.matrix);
+      }
+      ambientMesh.instanceMatrix.needsUpdate = true;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    window.onload = () => {
+      animate();
+    };
+  </script>
+</body>
+</html>
