@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國御的 GitHub Pages 發布測試</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center;
+      background: radial-gradient(circle at 20% 20%, #203e73, transparent 40%), linear-gradient(145deg, #0a1425, #111827); color: #f8fafc; }
+    main { width: min(90vw, 560px); text-align: center; padding: 52px 34px; background: #ffffff0c;
+      border: 1px solid #ffffff26; border-radius: 24px; box-shadow: 0 20px 60px #0004; }
+    .emoji { font-size: 54px; margin-bottom: 14px; }
+    h1 { font-size: clamp(24px, 5vw, 34px); margin: 0 0 12px; }
+    p { font-size: 17px; color: #cbd5e1; line-height: 1.8; }
+    button { margin-top: 18px; background: #38bdf8; color: #082f49; border: 0; border-radius: 12px;
+      padding: 14px 28px; font: 700 17px inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+    button:hover { background: #7dd3fc; }
+    #result { min-height: 2em; font-weight: bold; color: #86efac; }
+    small { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="emoji">🚀</div>
+    <h1>GitHub Pages 發布測試</h1>
+    <p>這是國御用來測試 ChatGPT Work<br>能否自主部署與發布網站的簡單網頁。</p>
+    <button id="testBtn" type="button">按我測試功能</button>
+    <p id="result" role="status" aria-live="polite"></p>
+    <small>單一 HTML 檔案｜不需資料庫或外部服務</small>
+  </main>
+  <script>
+    let clicks = 0;
+    document.getElementById('testBtn').addEventListener('click', () => {
+      clicks += 1;
+      document.getElementById('result').textContent = `✅ 測試成功！你已按下 ${clicks} 次。`;
+    });
+  </script>
+</body>
+</html>
